@@ -1,0 +1,57 @@
+services:
+  pr2_wordpress:
+    image: wordpress:6.8.1-php8.5-apache
+    container_name: wp${PROYECTO_ID}
+    ports:
+      - "8080:80"
+    depends_on:
+      - pr2_bd_wp
+    environment:
+      WORDPRESS_DB_HOST: pr2_bd_wp
+      WORDPRESS_DB_USER: ${DB_USER}
+      WORDPRESS_DB_PASSWORD: ${DB_PASSWORD}
+      WORDPRESS_DB_NAME: ${DB_NAME}
+      WORDPRESS_TABLE_PREFIX: "lcornejo_"
+      WORDPRESS_CONFIG_EXTRA: |
+        define('WP_HOME', 'http://lcornejo.local');
+        define('WP_SITEURL', 'http://lcornejo.local');
+    volumes:
+      - wp_content:/var/www/html/wp-content  # Directorio de Wordpress
+    restart: always
+    networks:
+      - wp_network
+
+  pr2_bd_wp:
+    image: mariadb:11.4
+    container_name: db${PROYECTO_ID}
+    environment:
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+    volumes:
+      - bd_datos:/var/lib/mysql  # directorio de los archivos de la BD
+    restart: always
+    networks:
+      - wp_network
+
+  pr2_phpmyadmin:
+    image: phpmyadmin:5.2-apache
+    container_name: pma_${PROYECTO_ID}
+    ports:
+      - "8081:80"
+    environment:
+      PMA_HOST: pr2_bd_wp  # servicio de la BD
+    depends_on:
+      - pr2_bd_wp
+    restart: always
+    networks:
+      - wp_network
+
+volumes:
+  bd_datos:
+  wp_content:
+
+networks:
+  wp_network:
+    driver: bridge
